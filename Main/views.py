@@ -103,7 +103,8 @@ def whatsapp_webhook(request):
         if 'messages' in value and value['messages']:
             messages=value.get('messages',[])[0]
             message_text=messages.get('text',{}).get('body','No Message Found')
-            
+            message_id=messages.get('id','Null')
+             # ✅ Store Message in Database
             print(f"📩 New Message from {username} ({phone_number}): {message_text}")
 
         if 'statuses' in value and value['statuses']:
@@ -111,10 +112,10 @@ def whatsapp_webhook(request):
             status=statuses.get('status','message not send')
             timestamp=statuses.get('timestamp','Null')
             user_number=statuses.get('recipient_id','Null')
+            message_id=statuses.get('id','Null')
+            # ✅ Store Status in Database
+            
             print(f"The Status is {status} TimeStamp {timestamp} and the Number {user_number}")
-             # 💡 Optional: If message is 'delivered' or 'read', perform an action
-            if status in ["delivered", "read"]:
-                print(f"🎉 Message successfully sent to {user_number} at {timestamp}")
         # print("Webhook Event:", json.dumps(data, indent=2))
         return JsonResponse({"status": "success"})
 

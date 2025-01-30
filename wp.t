@@ -10,7 +10,7 @@ Webhook Event: {
             "metadata": {
               "display_phone_number": "15551825634",
               "phone_number_id": "588918367638247"
-            },
+            }, 
             "contacts": [
               {
                 "profile": {
