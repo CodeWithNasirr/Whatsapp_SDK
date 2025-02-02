@@ -19,9 +19,17 @@ class Create_Template(models.Model):
         ("LOCATION", "LOCATION"),
     ]
     BUTTON_TYPE = [("QUICK-REPLIES", "QUICK-REPLIES"), ("CALLBACK", "CALLBACK")]
-
+    CHOICE_LANGUAGE = [
+    ('en_US', 'English (US)'),
+    ('en_IN', 'English (INDIA)'),
+    ('es_ES', 'Spanish (Spain)'),
+    ('fr_FR', 'French (France)'),
+    ('de_DE', 'German (Germany)'),
+    ('hi_IN', 'Hindi (India)'),
+    # Add other supported languages
+]
     template_name = models.CharField(max_length=255)
-    template_language = models.CharField(max_length=10, default="en_US")
+    template_language = models.CharField(max_length=100, default="en_US",choices=CHOICE_LANGUAGE)
     template_category = models.CharField(max_length=50, choices=CHOICE_CATEGORY)
     
     header_type = models.CharField(max_length=50, choices=CHOICE_TYPE, null=True, blank=True)
@@ -46,17 +54,9 @@ class Create_Template(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def extract_placeholders(self):
-        """Extracts dynamic placeholders (e.g., {{1}}, {{2}}) from the body text."""
         return re.findall(r"{{\d+}}", self.body_text)
 
-    def generate_payload(self, dynamic_values=None):
-        """
-        Generates a WhatsApp API-ready JSON payload.
-        :param dynamic_values: Dictionary to replace placeholders, e.g., {"1": "John", "2": "#1234"}
-        :return: JSON payload for API request
-        """
-        dynamic_values = dynamic_values or {}
-
+    def generate_payload(self):
         payload = {
             "name": self.template_name,
             "language": {"code": self.template_language},
@@ -66,57 +66,56 @@ class Create_Template(models.Model):
 
         # 🟢 Add Header Component (TEXT, IMAGE, VIDEO, FILE)
         if self.header_type:
-            header_component = {"type": "header", "format": self.header_type.upper()}
-            
-            if self.header_type.upper() == "TEXT" and self.header_text:
+            header_type_upper = self.header_type.upper()
+            if header_type_upper not in ["TEXT", "IMAGE", "DOCUMENT", "VIDEO", "FILE"]:
+                return  # or log an error
+
+            header_component = {"type": "HEADER", "format": header_type_upper}
+
+            if header_type_upper == "TEXT" and self.header_text:
                 header_component["text"] = self.header_text
-            elif self.header_type.upper() in ["IMAGE", "DOCUMENT", "VIDEO", "FILE"] and self.header_img_video_file_url:
-                header_component["parameters"] = [{
-                    "type": self.header_type.lower(),
-                    self.header_type.lower(): {"link": self.header_img_video_file_url}
-                }]
+            elif self.header_img_video_file_url:
+                # Create a dictionary mapping each header type to its corresponding key
+                component_key = header_type_upper.lower()  # 'image', 'document', 'video', or 'file'
+                header_component[component_key] = {
+                    "link": self.header_img_video_file_url
+                }
+
             payload["components"].append(header_component)
 
-        # 🟢 Add Body Component (With Dynamic Variables)
-        body_component = {"type": "body", "text": self.body_text}
-        placeholders = self.extract_placeholders()
-
-        if placeholders:
-            body_component["parameters"] = [
-                {"type": "text", "text": dynamic_values.get(p.strip('{}'), f"Missing Value for {p.strip('{}')}")}
-                for p in placeholders
-            ]
+        # 🟢 Add Body Component (With or Without Dynamic Variables)
+        body_component = {"type": "BODY"}
+        body_component["text"] = self.body_text
 
         payload["components"].append(body_component)
 
         # 🟢 Add Footer Component (If Exists)
         if self.footer_text:
-            payload["components"].append({"type": "footer", "text": self.footer_text})
+            payload["components"].append({"type": "FOOTER", "text": self.footer_text})
 
         # 🟢 Add Buttons Component
         buttons = []
         if self.button_type:
             if self.button_type == "QUICK-REPLIES" and self.button_text:
                 buttons.append({
-                    "type": "button",
-                    "sub_type": "QUICK_REPLY",
+                    "type": "TEXT",
                     "text": self.button_text
                 })
             elif self.button_type == "CALLBACK" and self.button_url:
                 buttons.append({
-                    "type": "button",
-                    "sub_type": "URL",
+                    "type": "URL",
                     "text": self.button_text,
                     "url": self.button_url
                 })
 
         if buttons:
-            payload["components"].append({"type": "buttons", "buttons": buttons})
+            payload["components"].append({"type": "BUTTONS", "buttons": buttons})
 
         return payload
 
     def __str__(self):
         return self.template_name
+    # so basically here we are creating a model for the template that we are going to create and we are also creating a function that will extract the placeholders from the body text and then we are creating a function that will generate the payload for the whatsapp api request and then we are returning the template name as the string representation of the object. 
 
 
 

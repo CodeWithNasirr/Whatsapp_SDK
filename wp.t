@@ -67,3 +67,113 @@ Webhook Event: {
     }
   ]
 }
+
+
+
+# tempalte strutuare
+{
+    "name": "xyzw",
+    "category": "MARKETING",
+    "language": "en_US",
+    "components": [
+        {
+            "type": "HEADER",
+            "format": "TEXT",
+            "text": "Hello Dosto"
+        },
+        {
+            "type": "BODY",
+            "text": "Hello, this is a test message."
+        },
+        {
+            "type": "FOOTER",
+            "text": "This is a footer section"
+        },
+        {
+            "type": "BUTTONS",
+            "buttons": [
+                {
+                    "type": "URL",
+                    "text": "Visit Website",
+                    "url": "https://ww19.0123movie.net/"
+                }
+            ]
+        }
+    ]
+}
+# image 
+{
+    "name": "xyzw",
+    "category": "MARKETING",
+    "language": "en_US",
+    "components": [
+        {
+            "type": "HEADER",
+            "format": "IMAGE",
+            "image": {
+                "link": "https://example.com/your-image.jpg"
+            }
+        },
+        {
+            "type": "BODY",
+            "text": "Hello, this is a test message."
+        },
+        {
+            "type": "FOOTER",
+            "text": "This is a footer section"
+        },
+        {
+            "type": "BUTTONS",
+            "buttons": [
+                {
+                    "type": "URL",
+                    "text": "Visit Website",
+                    "url": "https://ww19.0123movie.net/"
+                }
+            ]
+        }
+    ]
+}
+
+
+
+
+###
+
+def send_template_message(request):
+    recipient = "+918093537813"  # Replace with actual phone number
+    template_name = "account_setup"
+
+    # Fetch template from the database
+    template = Create_Template.objects.filter(template_name=template_name).first()
+    if not template:
+        return JsonResponse({"error": "Template not found"}, status=404)
+
+    # Extract placeholders from the template body
+    placeholders = template.extract_placeholders()
+
+    # Example dynamic values (replace with actual data)
+    dynamic_values = {"1": "John Doe", "2": "50% OFF"}
+
+    # Build WhatsApp parameters
+    parameters = [{"type": "text", "text": dynamic_values.get(p.strip('{}'), p)} for p in placeholders]
+
+    # Prepare the message payload
+    message_body = {
+        "template": {
+            "name": template_name,
+            "language": {"code": "en_US"},
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": parameters
+                }
+            ]
+        }
+    }
+
+    # Send the message via WhatsApp API
+    whatsapp = WhatsAppSDK(access_token=ACCESS_TOKEN, phone_number_id=PHONE_NUMBER_ID)
+    response = whatsapp.send_message(recipient, "template", message_body)
+
+    return JsonResponse(response)
