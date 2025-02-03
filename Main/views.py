@@ -10,11 +10,13 @@ import requests
 from rest_framework.decorators import APIView
 from Main.seriliazers import CreateTemplateSerilizers
 from .models import Create_Template
+import os
 # Replace these with your actual credentials
 ACCESS_TOKEN = "EAANspVj8RlsBO03vjlwxuJNH4cbCb6mUZB0oD9yqGdfP6FCiTfCc5VinaGZC3UvbiZBwQ8BuT2wUfMHcbITUCvbyZB9bfyeTOZAQJ3v1sUvZAx4txKJQHQeuGWx65FhoIc3hkXmns1X4DaBeLR5ZBgReUFMZBPgo3onZC56tm42Oz7npOMh5BrUllR4IlZBnSa9ySsAVN7KBat"
 # PHONE_NUMBER_ID = "561182647071541"
-PHONE_NUMBER_ID = "588918367638247"
+PHONE_NUMBER_ID = "588918367638247"#test number
 WHATSAPP_BUSINESS_ACCOUNT_ID='560756830446737' #7873445018
+# WHATSAPP_BUSINESS_ACCOUNT_ID='522798267590035' #test number
 
 
 
@@ -26,14 +28,17 @@ class SendWhatsAppTemplateView(APIView):
         if serializer.is_valid():
             template=serializer.save()# Save in DB
             payload = template.generate_payload()
-            print(f"Pyload details: {payload}")
-            # url = f"https://graph.facebook.com/v21.0/{WHATSAPP_BUSINESS_ACCOUNT_ID}/message_templates"
-            # headers = {
-            #     "Authorization": f"Bearer {ACCESS_TOKEN}",
-            #     "Content-Type": "application/json"
-            # }
-            # response = requests.post(url, json=payload, headers=headers)
-            # return Response(response.json(), status=status.HTTP_200_OK)
+            print(f"Pyload details: {json.dumps(payload, indent=2)}")
+            # return Response({
+            #     "Status":True,
+            # })
+            url = f"https://graph.facebook.com/v21.0/{WHATSAPP_BUSINESS_ACCOUNT_ID}/message_templates"
+            headers = {
+                "Authorization": f"Bearer {ACCESS_TOKEN}",
+                "Content-Type": "application/json"
+            }
+            response = requests.post(url, json=payload, headers=headers)
+            return Response(response.json(), status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

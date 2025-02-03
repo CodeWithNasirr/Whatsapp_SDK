@@ -59,7 +59,7 @@ class Create_Template(models.Model):
     def generate_payload(self):
         payload = {
             "name": self.template_name,
-            "language": {"code": self.template_language},
+            "language": self.template_language,
             "category": self.template_category,
             "components": []
         }
@@ -76,9 +76,10 @@ class Create_Template(models.Model):
                 header_component["text"] = self.header_text
             elif self.header_img_video_file_url:
                 # Create a dictionary mapping each header type to its corresponding key
-                component_key = header_type_upper.lower()  # 'image', 'document', 'video', or 'file'
-                header_component[component_key] = {
-                    "link": self.header_img_video_file_url
+                header_component["example"] = {
+                    "header_handle": [
+                        self.header_img_video_file_url
+                        ]
                 }
 
             payload["components"].append(header_component)
